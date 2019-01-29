@@ -194,6 +194,7 @@ for call in myData['siteIntervals']:
             else:
                 rpToFind[(rn,rNum)] = 1
     print 'After first pass, we have %i reads to find' % len(rpToFind)
+    rpToFindPass2 = []
     for (rn,rNum) in rpToFind:
         # check since we had updated
         if (rn,rNum) in samLines:
@@ -244,9 +245,72 @@ for call in myData['siteIntervals']:
             numWritten += 1
         else:
             print 'cannot find!',rn,rNum
+            rpToFindPass2.append((rn,rNum))
+
+    print 'Wrote out',numWritten
+    
+    print 'Ready for pass 3 -- have %i to do' % len(rpToFindPass2)
+
+### do pass 3    
+    for (rn,rNum) in rpToFindPass2:
+        # check since we had updated
+        if (rn,rNum) in samLines:
+            samLine = samLines[(rn,rNum)]
+            outSAM.write(samLine)
+            numWritten += 1
+            continue
+        
+        if rNum == '1':
+            otherNum = '2'
+        elif rNum == '2':
+            otherNum = '1'
+            
+        samLine = samLines[(rn,otherNum)]
+        samLine = samLine.rstrip()
+        samLine = samLine.split()
+        samParse = brkptgen.parse_sam_line(samLine)
+        #genutils.print_dictionary_keys(samParse)
+        newReg = 'TMP'
+        if samParse['mateChrom'] == '=':
+            newReg = samParse['chrom'] + ':' + samParse['matePos'] + '-' + samParse['matePos']
+        else:
+            newReg = samParse['mateChrom'] + ':' + samParse['matePos'] + '-' + samParse['matePos']
+         
+        if samParse['mateUnmapped'] is True and newReg == 'TMP':
+            print 'Mate is unmapped, not sure what to do, trying mapped region'
+#            print samLine
+            newReg = samParse['chrom'] + ':' + str(samParse['chromPos']) + '-' + str(samParse['chromPos'])
+
+
+        bamIn = brkptgen.open_bam_read(myData['bam'],newReg)
+        for line in bamIn:
+            numReads += 1
+            ol = line
+            line = line.rstrip()
+            line = line.split()
+            samParse = brkptgen.parse_sam_line(line)
+            if samParse['isFirst'] is True:
+                r = '1'
+            else:
+                r = '2'
+            samLines[(samParse['seqName'],r)] = ol
+        bamIn.close()
+        
+        #now do the check
+        if (rn,rNum) in samLines:
+            samLine = samLines[(rn,rNum)]
+            outSAM.write(samLine)
+            numWritten += 1
+        else:
+            print 'cannot find!',rn,rNum
+            print 'FAIL!'
             sys.exit()
 
     print 'Wrote out',numWritten
+
+
+    
+    
 outFile.close()
 outSAM.close()
 
