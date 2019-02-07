@@ -214,9 +214,10 @@ for call in myData['siteIntervals']:
         samParse = brkptgen.parse_sam_line(samLine)
         #genutils.print_dictionary_keys(samParse)
         if samParse['mateChrom'] == '=':
-            newReg = samParse['chrom'] + ':' + samParse['matePos'] + '-' + samParse['matePos']
+            
+            newReg = samParse['chrom'] + ':' + str(int(samParse['matePos'])-10) + '-' + str(int(samParse['matePos'])+10)
         else:
-            newReg = samParse['mateChrom'] + ':' + samParse['matePos'] + '-' + samParse['matePos']
+            newReg = samParse['mateChrom'] + ':' + str(int(samParse['matePos'])-10) + '-' + str(int(samParse['matePos'])+10)
          
         if samParse['mateUnmapped'] is True:
             print 'Mate is unmapped, not sure what to do, trying mapped region'
