@@ -159,7 +159,7 @@ for call in myData['siteIntervals']:
     print reg
     numReads = 0
     numSC = 0
-    bamIn = brkptgen.open_bam_read(myData['bam'],reg,myData['reference'])
+    bamIn = brkptgen.open_bam_read(myData['bam'],myData['reference'],reg)
     for line in bamIn:
         numReads += 1
         ol = line
@@ -236,7 +236,7 @@ for call in myData['siteIntervals']:
             newReg = samParse['chrom'] + ':' + str(samParse['chromPos']) + '-' + str(samParse['chromPos'])
 
 
-        bamIn = brkptgen.open_bam_read(myData['bam'],newReg,myData['reference'])
+        bamIn = brkptgen.open_bam_read(myData['bam'],myData['reference'],newReg)
         for line in bamIn:
             numReads += 1
             ol = line
@@ -294,7 +294,7 @@ for call in myData['siteIntervals']:
             newReg = samParse['chrom'] + ':' + str(samParse['chromPos']) + '-' + str(samParse['chromPos'])
 
 
-        bamIn = brkptgen.open_bam_read(myData['bam'],newReg,myData['reference'])
+        bamIn = brkptgen.open_bam_read(myData['bam'],myData['reference'],newReg)
         for line in bamIn:
             numReads += 1
             ol = line

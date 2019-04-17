@@ -103,7 +103,7 @@ def chromname_to_number(c):
         return 53
     return cnum   # just return it...
 ###############################################################################
-def open_bam_read(fileName,reg='',reference):
+def open_bam_read(fileName,reference,reg=''):
     # reference for CRAM
     # is FALSE if not given
 
