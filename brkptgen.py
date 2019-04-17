@@ -103,19 +103,38 @@ def chromname_to_number(c):
         return 53
     return cnum   # just return it...
 ###############################################################################
-def open_bam_read(fileName,reg=''):
-    # note -- skip over non-primary alignments...
-    if reg == '':
-        cmd = 'samtools view -F 256 ' + fileName
+def open_bam_read(fileName,reg='',reference):
+    # reference for CRAM
+    # is FALSE if not given
+
+    if reference is False:
+        # note -- skip over non-primary alignments...
+        if reg == '':
+            cmd = 'samtools view -F 256 ' + fileName
+        else:
+            cmd = 'samtools view -F 256 ' + fileName + ' ' + reg    
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # To deal with fact that might close file before reading all
+        try:
+            inFile = os.popen(cmd, 'r')
+        except:
+            print "ERROR!! Couldn't open the file " + fileName + " using samtools view -c\n"
+            sys.exit(1)
+        return inFile
     else:
-        cmd = 'samtools view -F 256 ' + fileName + ' ' + reg    
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # To deal with fact that might close file before reading all
-    try:
-        inFile = os.popen(cmd, 'r')
-    except:
-        print "ERROR!! Couldn't open the file " + fileName + " using samtools view -c\n"
-        sys.exit(1)
-    return inFile
+        # note -- skip over non-primary alignments...
+        if reg == '':
+            cmd = 'samtools view -F 256 -T ' + reference + ' ' + fileName
+        else:
+            cmd = 'samtools view -F 256 -T ' + reference + ' ' + reg    
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # To deal with fact that might close file before reading all
+        try:
+            inFile = os.popen(cmd, 'r')
+        except:
+            print "ERROR!! Couldn't open the file " + fileName + " using samtools view -c\n"
+            sys.exit(1)
+        return inFile
+
+
 #####################################################################
 def parse_sam_line(myLine):
     res = {}

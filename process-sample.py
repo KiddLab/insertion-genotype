@@ -37,6 +37,7 @@ python process-sample.py   --allelefile <allele file in proper format>
                            --bwa <path/cmd for bwa 0.5.9
                            --samplename <name of sample>
                            --bam <indexed bam of sample>
+                           --reference <reference fasta file, needed for CRAM support>
 
 
 """
@@ -47,6 +48,9 @@ parser.add_option('--bwa',dest='bwa', help = 'path/cmd for bwa 0.7.15')
 parser.add_option('--samplename',dest='sampleName', help = 'sample name')
 parser.add_option('--bam',dest='bam', help = 'bam of sample')
 parser.add_option('--excludefile',dest='excludeFile', help = 'file of coordinates to exclude contained mappings')
+parser.add_option('--reference',dest='referenceFile', help = 'reference file needed for CRAM support')
+
+
 
 
 (options, args) = parser.parse_args()
@@ -77,6 +81,11 @@ myData['alleleBase'] = options.alleleBase
 if myData['alleleBase'][-1] != '/' :
     myData['alleleBase'] += '/'
 
+
+if options.referenceFile is None:
+    myData['reference'] = False
+else:
+    myData['reference'] = options.referenceFile
 
 myData['siteIntervals'] = brkptgen.get_site_intervals_from_table(options.alleleFile)
 
@@ -150,7 +159,7 @@ for call in myData['siteIntervals']:
     print reg
     numReads = 0
     numSC = 0
-    bamIn = brkptgen.open_bam_read(myData['bam'],reg)
+    bamIn = brkptgen.open_bam_read(myData['bam'],reg,myData['reference'])
     for line in bamIn:
         numReads += 1
         ol = line
@@ -227,7 +236,7 @@ for call in myData['siteIntervals']:
             newReg = samParse['chrom'] + ':' + str(samParse['chromPos']) + '-' + str(samParse['chromPos'])
 
 
-        bamIn = brkptgen.open_bam_read(myData['bam'],newReg)
+        bamIn = brkptgen.open_bam_read(myData['bam'],newReg,myData['reference'])
         for line in bamIn:
             numReads += 1
             ol = line
@@ -285,7 +294,7 @@ for call in myData['siteIntervals']:
             newReg = samParse['chrom'] + ':' + str(samParse['chromPos']) + '-' + str(samParse['chromPos'])
 
 
-        bamIn = brkptgen.open_bam_read(myData['bam'],newReg)
+        bamIn = brkptgen.open_bam_read(myData['bam'],newReg,myData['reference'])
         for line in bamIn:
             numReads += 1
             ol = line
