@@ -106,7 +106,7 @@ def chromname_to_number(c):
 def open_bam_read(fileName,reference,reg=''):
     # reference for CRAM
     # is FALSE if not given
-
+    
     if reference is False:
         # note -- skip over non-primary alignments...
         if reg == '':
@@ -125,8 +125,9 @@ def open_bam_read(fileName,reference,reg=''):
         if reg == '':
             cmd = 'samtools view -F 256 -T ' + reference + ' ' + fileName
         else:
-            cmd = 'samtools view -F 256 -T ' + reference + ' ' + reg    
+            cmd = 'samtools view -F 256 -T ' + reference + ' ' + fileName + ' ' + reg    
         signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # To deal with fact that might close file before reading all
+                
         try:
             inFile = os.popen(cmd, 'r')
         except:
