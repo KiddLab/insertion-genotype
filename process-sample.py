@@ -170,6 +170,8 @@ for call in myData['siteIntervals']:
             continue
         if samParse['notPrimaryAlignment'] is True:
             continue
+        if samParse['SupplementaryAlignment'] is True:
+            continue
         if samParse['mapQ'] < myData['min_map_q']:
             continue
         if samParse['isPaired'] is False:

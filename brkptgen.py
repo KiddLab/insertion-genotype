@@ -160,6 +160,12 @@ def parse_sam_line(myLine):
     else:
         res['notPrimaryAlignment'] = False
 
+    if res['flag'] & 0x2048 != 0:
+        res['SupplementaryAlignment'] = True
+    else:
+        res['SupplementaryAlignment'] = False
+
+
     if res['flag'] & 0x1 != 0:
         res['isPaired'] = True
     else:
