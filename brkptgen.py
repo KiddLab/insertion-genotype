@@ -626,7 +626,7 @@ def which(program):
                 return exe_file
     return None
 #####################################################################
-def setup_locus_for_split(myData,siteID):
+def setup_locus_for_split(myData,siteID,siteChrom,sitePos):
     print 'Processign siteID',siteID
     origLocusAllelesFasta = myData['origLocusDir'] + siteID + '/alleles.fa'
     print origLocusAllelesFasta
@@ -724,14 +724,118 @@ def setup_locus_for_split(myData,siteID):
         
     
     # info to print out
-    nl = [siteID,tsdLen,s1Name,emptyTSDStart,emptyTSDEnd,s2Name,insLeftTSDStart,insLeftTSDEnd,insRightTSDStart,insRightTSDEnd]
+    nl = [siteID,tsdLen,s1Name,emptyTSDStart,emptyTSDEnd,s2Name,insLeftTSDStart,insLeftTSDEnd,insRightTSDStart,insRightTSDEnd,siteChrom,sitePos]
     print nl
     nl = [str(j) for j in nl]
     nl = '\t'.join(nl) + '\n'
     myData['brkpntOutFile'].write(nl)
     
 #####################################################################
+def read_brkpntFile(myData):
+    myData['brkpntIntervals'] = []
+    inFile = open(myData['brkpntFile'],'r')
+    for line in inFile:
+        if line[0] == '#':
+            continue
+        line = line.rstrip()
+        line = line.split()
+        for i in [1,3,4,6,7,8,9]:
+            line[i] = int(line[i])
+        myData['brkpntIntervals'].append(line)
+    inFile.close()
+#####################################################################
+def align_to_alts_split_mem(myData,siteData):
+    siteData['outSAM'] = siteData['mappingOutDir'] + 'mapped.sam'
+    siteData['targetFA'] = myData['newLocusDir'] + siteData['siteID'] + '/alleles.fa'    
+    # run bwa mem, with defaults...
+    cmd = myData['bwa'] + ' mem  -M  ' +  siteData['targetFA'] + ' ' + siteData['fq1'] + ' ' + siteData['fq2'] + ' > ' + siteData['outSAM']
+    print cmd
+    runCMD(cmd)        
+    select_hits_from_sam_split_mem(siteData,myData)
+#####################################################################
+def select_hits_from_sam_split_mem(siteData,myData):
 
+    siteData['outSAMmatch'] = siteData['outSAM'] + '.matchinfo'
+    outMatch = open(siteData['outSAMmatch'],'w')
+    # setup split read dict
+    print siteData['siteInterval']
+    print myData['tsdExtendWinLen']
+    
+    
+    
+    splitDict = {}
+    splitDict['empty'] = {}
+    for i in range( siteData['siteInterval'][3]-myData['tsdExtendWinLen'],siteData['siteInterval'][4] + myData['tsdExtendWinLen'] + 1):
+        splitDict['empty'][(siteData['siteInterval'][2],i)] = 1
 
+    splitDict['insLeft'] = {}
+    for i in range( siteData['siteInterval'][6]-myData['tsdExtendWinLen'],siteData['siteInterval'][7] + myData['tsdExtendWinLen'] + 1):
+        splitDict['insLeft'][(siteData['siteInterval'][5],i)] = 1
 
+    splitDict['insRight'] = {}
+    for i in range( siteData['siteInterval'][8]-myData['tsdExtendWinLen'],siteData['siteInterval'][9] + myData['tsdExtendWinLen'] + 1):
+        splitDict['insRight'][(siteData['siteInterval'][5],i)] = 1
 
+    print 'Lens for each split dict'
+    print len(splitDict['empty'])
+    print len(splitDict['insLeft'])
+    print len(splitDict['insRight'])
+    
+    
+    readMatchEmpty = 0
+    readMatchLeft = 0
+    readMatchRight = 0
+    
+    
+    
+    inBamFile = pysam.AlignmentFile(siteData['outSAM'],'r')
+    # go through read by read..
+    for read in  inBamFile:
+        if read.is_secondary is True:
+            continue
+        if read.is_supplementary is True:
+            continue
+        if read.is_unmapped is True:
+            continue
+        if read.mapping_quality == 0:
+            continue
+        
+        chromName = read.reference_name
+        countEmpty = 0
+        countInsLeft = 0
+        countInsRight = 0
+        
+        for i in read.get_reference_positions():
+            p = i + 1
+            if (chromName,p) in splitDict['empty']:
+                countEmpty += 1        
+            if (chromName,p) in splitDict['insLeft']:
+                countInsLeft += 1        
+            if (chromName,p) in splitDict['insRight']:
+                countInsRight += 1        
+                
+        print 'Counts are:', countEmpty,countInsLeft,countInsRight
+        # output ones non zero
+        if max(countEmpty,countInsLeft,countInsRight) > 0:
+            nl = [read.query_name,read.reference_name,read.cigarstring,countEmpty,countInsLeft,countInsRight]
+            nl = [str(j) for j in nl]
+            nl = '\t'.join(nl) + '\n'
+            outMatch.write(nl)
+        
+        
+        if countEmpty == len(splitDict['empty']):
+            readMatchEmpty += 1
+        if countInsLeft == len(splitDict['insLeft']):
+            readMatchLeft += 1
+        if countInsRight == len(splitDict['insRight']):
+            readMatchRight += 1
+    inBamFile.close()
+    outMatch.close()
+    # done with site
+    print 'Done with site -- here are the counts for reads across each junction'
+    print readMatchEmpty,readMatchLeft,readMatchRight
+    nl = [siteData['siteID'],myData['sampleName'],readMatchEmpty,readMatchLeft,readMatchRight]
+    nl = [str(j) for j in nl]
+    nl = '\t'.join(nl) + '\n'
+    myData['splitSummaryFile'].write(nl)
+#####################################################################
