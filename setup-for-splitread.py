@@ -72,17 +72,18 @@ if os.path.isdir(myData['newLocusDir']) is False:
 
 print 'Checking bwa...'
 if brkptgen.which(myData['bwa']) is None:
-	print 'bwa not found in path! please fix (module add?)'
+	print 'ERROR bwa not found in path! please fix (module add?)'
 	sys.exit()
 
 print 'Checking samtools...'
 if brkptgen.which('samtools') is None:
-	print 'samtools not found in path! please fix (module add?)'
+	print 'ERROR samtools not found in path! please fix (module add?)'
 	sys.exit()
 
 print 'Checking age_align...'
 if brkptgen.which('age_align') is None:
-	print 'age_align not found in path! please fix (module add?)'
+	print 'ERROR age_align not found in path! please fix (module add?)'
+	print 'ERROR need program age for alignment! check path!'
 	sys.exit()
 
 ###############################################################################
