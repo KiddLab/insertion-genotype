@@ -96,14 +96,14 @@ myData['siteIntervals'] = brkptgen.get_site_intervals_from_table(options.alleleF
 print 'Found %i siteIntervals' % len(myData['siteIntervals'])
 
 myData['brkpntOutFile'] = open(options.brkpntFile,'w')
-nl = ['#siteID','tsdLen','emptyName','emptyTSDStart','emptyTSDEnd','insName','insLeftTSDStart','insLeftTSDEnd','insRightTSDStart','insRightTSDEnd']
+nl = ['#siteID','tsdLen','emptyName','emptyTSDStart','emptyTSDEnd','insName','insLeftTSDStart','insLeftTSDEnd','insRightTSDStart','insRightTSDEnd','chrom','pos']
 nl = '\t'.join(nl) + '\n'
 myData['brkpntOutFile'].write(nl)
 
 for siteInterval in myData['siteIntervals']:
     siteID = siteInterval[0]
     print siteInterval
-    brkptgen.setup_locus_for_split(myData,siteID)
+    brkptgen.setup_locus_for_split(myData,siteID,siteInterval[1][0],siteInterval[1][3])
 
 
 myData['brkpntOutFile'].close()
