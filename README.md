@@ -99,5 +99,6 @@ This is a (1-based) set of intervals on the targeted sequences (chr1_xxx_genome 
 improvement for genotyping large insertions (full length LINE or ERV proviruses) as some reads may map entirely within the element and not having any anchoring information unique to that region.
 
 ## Update May 2019:
-Added new module to genotype using only split reads that cross breakpoint/TSD sregion
+Added new module to genotype using only split reads that cross breakpoint/TSD region
+Just takes one end when there is sequence deleted also from the empty allele
  
