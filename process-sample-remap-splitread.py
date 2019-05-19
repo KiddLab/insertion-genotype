@@ -147,12 +147,25 @@ print 'Split summary output table name is',myData['splitSummaryFileName']
 myData['splitSummaryFile'].write('#siteID\tsampleName\tnumMatchEmpty\tnumMatchInsLeft\tnumMatchInsRight\n')
 
 
+siteInfoDict = {}
+
 for interval_i in range(len(myData['brkpntIntervals'])):
     siteInterval = myData['brkpntIntervals'][interval_i]
     print interval_i, siteInterval
         
     siteID = siteInterval[0]
     print siteInterval
+    
+    siteInfoDict[siteID] = {}
+    siteInfoDict[siteID]['chrom'] = siteInterval[10]
+    siteInfoDict[siteID]['pos'] = siteInterval[11]
+    if '_genome' in siteInterval[2]:
+        siteInfoDict[siteID]['refType'] = 'refEmpty'
+    else:
+        siteInfoDict[siteID]['refType'] = 'refIns'
+    
+    
+    
     siteData = {}
     siteData['siteID'] =  siteID
     siteData['siteInterval'] = siteInterval
@@ -169,6 +182,79 @@ for interval_i in range(len(myData['brkpntIntervals'])):
     brkptgen.align_to_alts_split_mem(myData,siteData)    
 
 myData['splitSummaryFile'].close()    
+    
+
+# make VCF
+myData['outVCFName'] = myData['samplesBase'] + myData['sampleName'] + '.vcf'
+print 'Writting VCF to',myData['outVCFName']
+
+outVCF = open(myData['outVCFName'],'w')
+outVCF.write('##fileformat=VCFv4.1\n')
+outVCF.write('##fileDate=20190519\n')
+outVCF.write('##reference=canFam3.1\n')
+outVCF.write('##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Allelic depths for the empty and ins">\n')
+outVCF.write('##FORMAT=<ID=BD,Number=1,Type=Integer,Description="Read Depth for breakpoint regions empty, ins left, ins right">\n')
+outVCF.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+
+outVCF.write('##ALT=<ID=INS:ME:SINEC,Description="Insertion of SINEC element">\n')
+outVCF.write('##INFO=<ID=DP,Number=1,Type=Integer,Description="Filtered Depth">\n')
+header = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT']
+header.append(myData['sampleName'])
+nl = '\t'.join(header) + '\n'
+outVCF.write(nl)
+
+
+inFile = open(myData['splitSummaryFileName'],'r')
+for line in inFile:
+    line = line.rstrip()
+    line = line.split()
+    if line[0] == '#siteID':
+        continue
+    
+    siteID = line[0]
+    # put in 'N' for ref... not right, but ok for now?
+    # also <MEI> isn't exaclt right
+    nl = [siteInfoDict[siteID]['chrom'],siteInfoDict[siteID]['pos'],siteID,'N','<MEI>','.','.']
+    totDepth = int(line[2]) + int(line[3]) + int(line[4])
+    i = 'DP=%i' % totDepth
+    i += ';' + siteInfoDict[siteID]['refType']
+    nl.append(i)   
+    f = 'GT:AD:BD'
+    nl.append(f)
+    
+    me = int(line[2])
+    ml = int(line[3])
+    mr = int(line[4])
+    mAlt = ml + mr
+    
+    if me == 0 and mAlt == 0:
+       naiveGen = '.'
+    elif me == mAlt:
+       naiveGen = '0/1'
+    elif me > mAlt:
+       naiveGen = '0/0'
+    else:
+       naiveGen = '1/1'
+    
+
+
+    gen = naiveGen + ':' + '%s' % me + ',' + '%s' % mAlt + ':' + '%s,%s,%s' % (me,ml,mr)
+    nl.append(gen)
+    nl = '\t'.join(nl) + '\n'
+    outVCF.write(nl)
+outVCF.close()
+print 'Wrote out VCF file !  All done'
+
+
+
+
+
+
+
+
+
+
+
     
     
 

@@ -753,6 +753,21 @@ def align_to_alts_split_mem(myData,siteData):
     runCMD(cmd)        
     select_hits_from_sam_split_mem(siteData,myData)
 #####################################################################
+def get_cigar_counts(cig_string):    
+    cigCounts = {}
+    cigCounts['M'] = 0
+    cigCounts['D'] = 0
+    cigCounts['I'] = 0
+    cigCounts['S'] = 0
+    cigCounts['H'] = 0                    
+    cigExpand = expand_cigar(cig_string)
+    for i in cigExpand:
+        cigCounts[i[1]] += i[0]        
+    return cigCounts
+#####################################################################
+
+
+
 def select_hits_from_sam_split_mem(siteData,myData):
 
     siteData['outSAMmatch'] = siteData['outSAM'] + '.matchinfo'
@@ -799,7 +814,16 @@ def select_hits_from_sam_split_mem(siteData,myData):
             continue
         if read.mapping_quality == 0:
             continue
-        
+
+        if read.mapping_quality < 20:  # be sure is really a better match to that allele...
+            continue
+
+
+       # remove cig hitsN
+        cigCounts = get_cigar_counts(read.cigarstring)
+        if cigCounts['S'] >= 10:
+            print 'Skipping -- has at least 10 soft clips, so I question the alignment'
+            continue
         chromName = read.reference_name
         countEmpty = 0
         countInsLeft = 0
