@@ -98,5 +98,24 @@ An optional additional filtering step using an exclusion file has been added (--
 This is a (1-based) set of intervals on the targeted sequences (chr1_xxx_genome and chr1_xxx_alternative, etc) for exclusion.  Read pairs that map nearly entirely within the exclusion region are removed from consideration in genotyping.  This is an important
 improvement for genotyping large insertions (full length LINE or ERV proviruses) as some reads may map entirely within the element and not having any anchoring information unique to that region.
 
+## Update May 2019:
+Added new module to genotype using only split reads that cross breakpoint/TSD region. Just takes one end when there is sequence deleted also from the empty allele
+
+Step one:
+python2 setup-for-splitread.py 
+
+requires that the program age be in the path, use a recent version of bwa, such as 0.7.15 or newer.
+This step is only required to be run once.
+
+
+Step two:
+python process-sample-remap-splitread.py
+
+Ran with proper files for each sample.  Uses extracted reads from previous run
+
+
+
+
+
 
  
