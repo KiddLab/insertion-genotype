@@ -84,9 +84,10 @@ def process_align_file(fileName):
 
     # low identity alignments, has problem, likely N or not spanned...
     res['lowIDent'] = 'No'
+    
     if res['fracIdent'] < 0.80:
         res['lowIDent'] = 'Yes'
-        return res
+    #    return res
     
     # get the align info
     if fileLines[11][0] != 'Alignment:':
@@ -97,7 +98,7 @@ def process_align_file(fileName):
     align = fileLines[12]
     if 'EXCISED' not in align:
         res['lowIDent'] = 'noExcised'
-        return res
+    #    return res
 
         
         
